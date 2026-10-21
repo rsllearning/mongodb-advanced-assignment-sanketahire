@@ -119,3 +119,69 @@ db.employees.findOne({ name: "John" });
 db.employees.findOne({ name: "Alice" });
 
 db.employees.countDocuments();
+
+db.departments.drop();
+
+db.departments.insertMany([
+  { _id: NumberInt(10), name: "Engineering" },
+  { _id: NumberInt(20), name: "HR" }
+]);
+
+db.employees.aggregate([
+  {
+    $lookup: {
+      from: "departments",
+      localField: "departmentId",
+      foreignField: "_id",
+      as: "department"
+    }
+  },
+  { $unwind: "$department" },
+  {
+    $project: {
+      _id: 0,
+      name: 1,
+      departmentName: "$department.name"
+    }
+  },
+  { $sort: { name: 1 } }
+]);
+
+db.employees.aggregate([
+  {
+    $lookup: {
+      from: "departments",
+      localField: "departmentId",
+      foreignField: "_id",
+      as: "department"
+    }
+  },
+  { $unwind: "$department" },
+  { $count: "totalJoinedEmployees" }
+]);
+
+db.employees.aggregate([
+  { $unwind: "$skills" },
+  {
+    $group: {
+      _id: "$skills",
+      employeeCount: { $sum: 1 }
+    }
+  },
+  { $sort: { employeeCount: -1, _id: 1 } }
+]);
+
+db.employees.aggregate([
+  { $match: { active: true } },
+  {
+    $facet: {
+      activeEmployees: [
+        { $sort: { name: 1 } },
+        { $project: { _id: 0, name: 1 } }
+      ],
+      totalCount: [
+        { $count: "activeEmployees" }
+      ]
+    }
+  }
+]);

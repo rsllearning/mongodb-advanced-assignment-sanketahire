@@ -553,3 +553,194 @@ db.employees.countDocuments();
 * **Final State Verification (John Experience, Alice Active, Total Count):**  
   ![Task 3 Bulk Write Verification](screenshots/03b_bulk_write_verification.png)
 
+---
+
+### Task 4: Advanced Aggregation
+
+#### Step 1: Create the Departments Collection
+Create and seed the `departments` collection with Engineering and HR records using `NumberInt()` for integer identifiers.
+
+⚡ **Input Command:**
+```javascript
+db.departments.drop();
+db.departments.insertMany([
+  { _id: NumberInt(10), name: "Engineering" },
+  { _id: NumberInt(20), name: "HR" }
+]);
+```
+🖥️ **Terminal Output:**
+```json
+{
+  "acknowledged": true,
+  "insertedIds": {
+    "0": 10,
+    "1": 20
+  }
+}
+```
+
+#### 4.1 Join Employees with Departments
+Build an aggregation pipeline that performs a left outer join between `employees.departmentId` and `departments._id`, flattens the joined array with `$unwind`, projects **only** employee `name` and `departmentName` (suppressing `_id`), and sorts by employee `name` in ascending order.
+
+⚡ **Input Command:**
+```javascript
+db.employees.aggregate([
+  {
+    $lookup: {
+      from: "departments",
+      localField: "departmentId",
+      foreignField: "_id",
+      as: "department"
+    }
+  },
+  { $unwind: "$department" },
+  {
+    $project: {
+      _id: 0,
+      name: 1,
+      departmentName: "$department.name"
+    }
+  },
+  { $sort: { name: 1 } }
+]);
+```
+🖥️ **Terminal Output:**
+```json
+[
+  {
+    "name": "Alice",
+    "departmentName": "Engineering"
+  },
+  {
+    "name": "David",
+    "departmentName": "HR"
+  },
+  {
+    "name": "Emma",
+    "departmentName": "HR"
+  },
+  {
+    "name": "John",
+    "departmentName": "Engineering"
+  }
+]
+```
+
+**Verification:**  
+Confirm that every single employee in the collection was successfully matched and joined (count = 4):
+
+⚡ **Input Command:**
+```javascript
+db.employees.aggregate([
+  {
+    $lookup: {
+      from: "departments",
+      localField: "departmentId",
+      foreignField: "_id",
+      as: "department"
+    }
+  },
+  { $unwind: "$department" },
+  { $count: "totalJoinedEmployees" }
+]);
+```
+🖥️ **Terminal Output:**
+```json
+[
+  {
+    "totalJoinedEmployees": 4
+  }
+]
+```
+
+#### 4.2 Count Employees for Each Skill
+Deconstruct the `skills` array using `$unwind`, group by individual skill with `$sum: 1` accumulator, sort by `employeeCount` descending, and apply an ascending alphabetical tie-breaker on the skill name (`_id: 1`) for deterministic ordering when counts match.
+
+⚡ **Input Command:**
+```javascript
+db.employees.aggregate([
+  { $unwind: "$skills" },
+  {
+    $group: {
+      _id: "$skills",
+      employeeCount: { $sum: 1 }
+    }
+  },
+  { $sort: { employeeCount: -1, _id: 1 } }
+]);
+```
+🖥️ **Terminal Output:**
+```json
+[
+  {
+    "_id": "MongoDB",
+    "employeeCount": 2
+  },
+  {
+    "_id": "Communication",
+    "employeeCount": 1
+  },
+  {
+    "_id": "Excel",
+    "employeeCount": 1
+  },
+  {
+    "_id": "Java",
+    "employeeCount": 1
+  },
+  {
+    "_id": "Python",
+    "employeeCount": 1
+  }
+]
+```
+
+#### 4.3 Return Active Employees and a Count ($facet)
+Use `$facet` to execute two parallel sub-pipelines in a single database round-trip across filtered active employees (`active: true`):
+1. `activeEmployees`: Projects employee names sorted alphabetically in ascending order.
+2. `totalCount`: Returns the total count of active employees (`$count: "activeEmployees"` = 2, representing John and Emma, since Alice was set to inactive in Task 3 and David is inactive).
+
+⚡ **Input Command:**
+```javascript
+db.employees.aggregate([
+  { $match: { active: true } },
+  {
+    $facet: {
+      activeEmployees: [
+        { $sort: { name: 1 } },
+        { $project: { _id: 0, name: 1 } }
+      ],
+      totalCount: [
+        { $count: "activeEmployees" }
+      ]
+    }
+  }
+]);
+```
+🖥️ **Terminal Output:**
+```json
+[
+  {
+    "activeEmployees": [
+      {
+        "name": "Emma"
+      },
+      {
+        "name": "John"
+      }
+    ],
+    "totalCount": [
+      {
+        "activeEmployees": 2
+      }
+    ]
+  }
+]
+```
+
+#### Visual Execution Proof:
+* **Department Lookup, Unwind & Sort (4.1):**  
+  ![Task 4.1 Department Join](screenshots/04a_department_join.png)
+* **Skill Counts with Secondary Tie-Breaker & Facet Active Count (4.2 & 4.3):**  
+  ![Task 4.2 & 4.3 Aggregation Results](screenshots/04b_skills_and_facet_aggregation.png)
+
