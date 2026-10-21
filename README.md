@@ -1000,3 +1000,65 @@ switched to db company_advanced
 * **Restored Database Collection Counts Verification:**  
   ![Task 6 Restored Counts Verification](screenshots/06b_restored_collection_counts.png)
 
+---
+
+### Task 7: MongoDB Advanced Concepts — MCQs
+
+The theoretical assessment evaluates production concepts across distributed transactions, replication durability, automated failover, horizontal sharding, real-time change events, and defense-in-depth security. Full detailed justifications are documented in [`answers.md`](answers.md).
+
+#### Executive Answer Key
+
+| Question # | Core Topic Area | Correct Answer | Key Concept Summary |
+| :---: | :--- | :---: | :--- |
+| **Q1** | Schema Validation | **B** | Enforces data integrity by rejecting documents violating field types/schemas. |
+| **Q2** | Array Query Operators (`$elemMatch`) | **B** | Ensures multiple query criteria match against the *same* embedded array object. |
+| **Q3** | Filtered Array Updates (`arrayFilters`) | **C** | Selectively updates array elements that satisfy specific conditional criteria. |
+| **Q4** | Bulk Operations (`bulkWrite`) | **A** | Combines multiple write operations into a single round-trip network payload. |
+| **Q5** | Aggregation Pipeline Stages (`$lookup`) | **C** | Performs left outer joins to pull related documents from another collection. |
+| **Q6** | Execution Plan Diagnostics (`IXSCAN`) | **B** | Indicates the query planner leveraged an index B-tree rather than a `COLLSCAN`. |
+| **Q7** | Multi-Document Transactions (`abortTransaction`) | **C** | Aborts transactional batch and rolls back uncommitted writes atomically. |
+| **Q8** | Replica Set Durability (`w: "majority"`) | **B** | Guarantees write acknowledgement across majority of voting data-bearing members. |
+| **Q9** | High Availability & Failover | **C** | Eligible replica set secondaries automatically elect a new Primary node. |
+| **Q10** | Sharding Strategy (Shard Key) | **B** | Requires high cardinality and uniform distribution to prevent jumbo chunks and hotspots. |
+| **Q11** | Real-Time Events (Change Streams) | **A** | Applications listen in real time to database mutations (inserts, updates, deletes) via oplog. |
+| **Q12** | Production Security Hardening | **C** | Hardens database using TLS encryption, restricted network access, and least privilege. |
+
+---
+
+## 📦 Submission Deliverables Audit Matrix
+
+All required deliverables specified in the assignment prompt have been implemented, strictly formatted, and verified against our local MongoDB `8.0.34` environment:
+
+| Deliverable # | Required Item / File | Description & Compliance Status | File Link |
+| :---: | :--- | :--- | :---: |
+| **1** | Pure JavaScript Queries | Pure executable `mongosh` queries for Tasks 1–5 without wrappers or comments. | [`mongodb-advanced-assignment.js`](mongodb-advanced-assignment.js) |
+| **2** | Backup & Restore Commands | Exact CLI syntax for logical gzip archive backup and namespace-remapped restore. | [`backup-restore-commands.txt`](backup-restore-commands.txt) |
+| **3** | Assessment Answers & Metrics | Live machine `explain("executionStats")` metrics (Task 5.2) + All 12 MCQs with justifications (Task 7). | [`answers.md`](answers.md) |
+| **4** | Visual Proof Screenshots | 14 high-resolution terminal captures documenting every task step and count verification. | [`screenshots/`](screenshots/) |
+| **5** | Git Branch & Pull Request | Feature branch `feature/mongodb-advanced-assignment` with clean atomic commits. | GitHub Branch |
+| **6** | Status Updates | Midpoint update (Task 1) and final completion handoff report for mentor/lead submission. | Prepared for Submission |
+
+---
+
+## 📸 Complete Visual Evidence Index
+
+| Screenshot ID | Assignment Task | Visual Verification Target | File Link |
+| :---: | :--- | :--- | :---: |
+| `01a` | Task 1: Setup & Seed | Clean database creation and initial 3 employee insertions | [`01a_setup_and_seed.png`](screenshots/01a_setup_and_seed.png) |
+| `01b` | Task 1: Schema Rejection | Document `_id: 99` rejection with `DocumentValidationFailure` | [`01b_validation_failure.png`](screenshots/01b_validation_failure.png) |
+| `01c` | Task 1: Count Verification | Exact count verification of 3 valid employees | [`01c_count_verification.png`](screenshots/01c_count_verification.png) |
+| `02a` | Task 2: `$elemMatch` & Positional `$` | Query matching Alice and updating John's cert to `Active` | [`02a_array_match_and_positional_update.png`](screenshots/02a_array_match_and_positional_update.png) |
+| `02b` | Task 2: `arrayFilters` | Batch updating certs `< 2027` to `Renewal Due` | [`02b_array_filters_and_verification.png`](screenshots/02b_array_filters_and_verification.png) |
+| `03a` | Task 3: `bulkWrite()` Execution | Single atomic call executing 2 updates and 1 insert | [`03a_bulk_write_execution.png`](screenshots/03a_bulk_write_execution.png) |
+| `03b` | Task 3: Bulk Verification | Validating John experience=5, Alice active=false, total count=4 | [`03b_bulk_write_verification.png`](screenshots/03b_bulk_write_verification.png) |
+| `04a` | Task 4: `$lookup` & `$unwind` | Cross-collection join with departments, sorted by employee name | [`04a_department_join.png`](screenshots/04a_department_join.png) |
+| `04b` | Task 4: Skills & `$facet` | Skill counts with tie-breaker and faceted active employee pagination | [`04b_skills_and_facet_aggregation.png`](screenshots/04b_skills_and_facet_aggregation.png) |
+| `05a` | Task 5: Compound Index | Creation and verification of `departmentId_1_name_1` index | [`05a_compound_index_and_winning_plan.png`](screenshots/05a_compound_index_and_winning_plan.png) |
+| `05b` | Task 5: Execution Stats | Winning plan `IXSCAN` and optimal $2:2:2$ metric ratio | [`05b_execution_stats_metrics.png`](screenshots/05b_execution_stats_metrics.png) |
+| `05c` | Task 5: TTL Index | Creation and verification of `expiresAt_1` TTL index on `sessions` | [`05c_ttl_index_verification.png`](screenshots/05c_ttl_index_verification.png) |
+| `06a` | Task 6: Backup & Remapped Restore | Logical gzip archive dump and namespace-remapped restore (`0 failures`) | [`06a_dump_and_restore.png`](screenshots/06a_dump_and_restore.png) |
+| `06b` | Task 6: Restored Counts Verification | Count verification in `company_advanced_restore` (`4`, `2`, `1`) | [`06b_restored_collection_counts.png`](screenshots/06b_restored_collection_counts.png) |
+
+
+
+
