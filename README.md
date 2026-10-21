@@ -744,3 +744,168 @@ db.employees.aggregate([
 * **Skill Counts with Secondary Tie-Breaker & Facet Active Count (4.2 & 4.3):**  
   ![Task 4.2 & 4.3 Aggregation Results](screenshots/04b_skills_and_facet_aggregation.png)
 
+---
+
+### Task 5: Indexing and Query Performance
+
+#### 5.1 Create and Verify a Compound Index
+Create an ascending compound index on `departmentId` followed by `name` (`{ departmentId: 1, name: 1 }`), explicitly named `departmentId_1_name_1`. Verify its creation using `getIndexes()`.
+
+⚡ **Input Command:**
+```javascript
+db.employees.createIndex(
+  { departmentId: 1, name: 1 },
+  { name: "departmentId_1_name_1" }
+);
+
+db.employees.getIndexes();
+```
+🖥️ **Terminal Output:**
+```json
+[
+  {
+    "v": 2,
+    "key": {
+      "_id": 1
+    },
+    "name": "_id_"
+  },
+  {
+    "v": 2,
+    "key": {
+      "departmentId": 1,
+      "name": 1
+    },
+    "name": "departmentId_1_name_1"
+  }
+]
+```
+
+#### 5.2 Read `explain("executionStats")`
+Execute `explain("executionStats")` for the query filtering by `departmentId: 10` and sorted by `name: 1`.
+
+⚡ **Input Command:**
+```javascript
+db.employees
+  .find({ departmentId: 10 })
+  .sort({ name: 1 })
+  .explain("executionStats");
+```
+🖥️ **Terminal Output (`explain("executionStats")`):**
+```json
+{
+  "explainVersion": "1",
+  "queryPlanner": {
+    "namespace": "company_advanced.employees",
+    "parsedQuery": {
+      "departmentId": {
+        "$eq": 10
+      }
+    },
+    "indexFilterSet": false,
+    "winningPlan": {
+      "stage": "FETCH",
+      "inputStage": {
+        "stage": "IXSCAN",
+        "keyPattern": {
+          "departmentId": 1,
+          "name": 1
+        },
+        "indexName": "departmentId_1_name_1",
+        "isMultiKey": false,
+        "direction": "forward",
+        "indexBounds": {
+          "departmentId": [
+            "[10, 10]"
+          ],
+          "name": [
+            "[MinKey, MaxKey]"
+          ]
+        }
+      }
+    }
+  },
+  "executionStats": {
+    "executionSuccess": true,
+    "nReturned": 2,
+    "executionTimeMillis": 0,
+    "totalKeysExamined": 2,
+    "totalDocsExamined": 2,
+    "executionStages": {
+      "stage": "FETCH",
+      "nReturned": 2,
+      "executionTimeMillisEstimate": 0,
+      "docsExamined": 2,
+      "inputStage": {
+        "stage": "IXSCAN",
+        "nReturned": 2,
+        "executionTimeMillisEstimate": 0,
+        "keyPattern": {
+          "departmentId": 1,
+          "name": 1
+        },
+        "indexName": "departmentId_1_name_1",
+        "direction": "forward",
+        "keysExamined": 2,
+        "seeks": 1
+      }
+    }
+  }
+}
+```
+
+##### Recorded Task 5.2 Metrics for [`answers.md`](answers.md):
+- **winning plan stage:** `IXSCAN` (under `FETCH` using index `departmentId_1_name_1`)
+- **nReturned:** `2`
+- **totalDocsExamined:** `2`
+- **totalKeysExamined:** `2`
+
+#### 5.3 Create a TTL Index on `sessions`
+Create the `sessions` collection, insert a session document expiring in 10 minutes (`Date.now() + 600000`), and create a TTL index on `expiresAt` with `expireAfterSeconds: 0`, named `expiresAt_1`.
+
+⚡ **Input Command:**
+```javascript
+db.sessions.drop();
+
+db.sessions.insertOne({
+  _id: 1,
+  userName: "John",
+  expiresAt: new Date(Date.now() + 600000)
+});
+
+db.sessions.createIndex(
+  { expiresAt: 1 },
+  { expireAfterSeconds: 0, name: "expiresAt_1" }
+);
+
+db.sessions.getIndexes();
+```
+🖥️ **Terminal Output:**
+```json
+[
+  {
+    "v": 2,
+    "key": {
+      "_id": 1
+    },
+    "name": "_id_"
+  },
+  {
+    "v": 2,
+    "key": {
+      "expiresAt": 1
+    },
+    "name": "expiresAt_1",
+    "expireAfterSeconds": 0
+  }
+]
+```
+
+#### Visual Execution Proof:
+* **Compound Index Creation & Winning Plan Inspection (5.1 & 5.2):**  
+  ![Task 5 Compound Index & Plan](screenshots/05a_compound_index_and_winning_plan.png)
+* **ExecutionStats Metrics Inspection (5.2):**  
+  ![Task 5 Execution Stats](screenshots/05b_execution_stats_metrics.png)
+* **TTL Collection, Document & Index Verification (5.3):**  
+  ![Task 5 TTL Index Verification](screenshots/05c_ttl_index_verification.png)
+

@@ -185,3 +185,27 @@ db.employees.aggregate([
     }
   }
 ]);
+
+db.employees.createIndex(
+  { departmentId: 1, name: 1 },
+  { name: "departmentId_1_name_1" }
+);
+
+db.employees.getIndexes();
+
+db.employees.find({ departmentId: 10 }).sort({ name: 1 }).explain("executionStats");
+
+db.sessions.drop();
+
+db.sessions.insertOne({
+  _id: 1,
+  userName: "John",
+  expiresAt: new Date(Date.now() + 600000)
+});
+
+db.sessions.createIndex(
+  { expiresAt: 1 },
+  { expireAfterSeconds: 0, name: "expiresAt_1" }
+);
+
+db.sessions.getIndexes();
