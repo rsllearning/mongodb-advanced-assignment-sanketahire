@@ -423,3 +423,133 @@ db.employees.find({}, { name: 1, certifications: 1 });
 * **arrayFilters Update & Final Certification Verification:**  
   ![Task 2 Array Filters & Final Verification](screenshots/02b_array_filters_and_verification.png)
 
+---
+
+### Task 3: Bulk Write Operations
+
+#### Step 1: Execute Single `bulkWrite()` Call
+Execute three distinct write operations in one batch via `db.employees.bulkWrite()`:
+1. Increment John's experience by 1 using `$inc`.
+2. Set Alice's `active` field to `false` using `$set`.
+3. Insert Emma using `insertOne` with strict BSON integer typing.
+
+⚡ **Input Command:**
+```javascript
+db.employees.bulkWrite([
+  {
+    updateOne: {
+      filter: { name: "John" },
+      update: { $inc: { experience: NumberInt(1) } }
+    }
+  },
+  {
+    updateOne: {
+      filter: { name: "Alice" },
+      update: { $set: { active: false } }
+    }
+  },
+  {
+    insertOne: {
+      document: {
+        _id: 4,
+        name: "Emma",
+        departmentId: NumberInt(20),
+        skills: ["Excel"],
+        experience: NumberInt(2),
+        active: true,
+        certifications: [
+          { name: "Excel", status: "Active", expiryYear: NumberInt(2026) }
+        ]
+      }
+    }
+  }
+]);
+```
+🖥️ **Terminal Output:**
+```json
+{
+  "acknowledged": true,
+  "insertedCount": 1,
+  "insertedIds": {
+    "2": 4
+  },
+  "matchedCount": 2,
+  "modifiedCount": 2,
+  "deletedCount": 0,
+  "upsertedCount": 0,
+  "upsertedIds": {}
+}
+```
+
+#### Step 2: Verification of Final Collection State
+
+##### Verification 1: John's Experience Incremented (4 → 5)
+⚡ **Input Command:**
+```javascript
+db.employees.findOne({ name: "John" });
+```
+🖥️ **Terminal Output:**
+```json
+{
+  "_id": 1,
+  "name": "John",
+  "departmentId": 10,
+  "skills": [
+    "Java",
+    "MongoDB"
+  ],
+  "experience": 5,
+  "active": true,
+  "certifications": [
+    {
+      "name": "MongoDB",
+      "status": "Renewal Due",
+      "expiryYear": 2026
+    }
+  ]
+}
+```
+
+##### Verification 2: Alice's Active Status Updated (true → false)
+⚡ **Input Command:**
+```javascript
+db.employees.findOne({ name: "Alice" });
+```
+🖥️ **Terminal Output:**
+```json
+{
+  "_id": 2,
+  "name": "Alice",
+  "departmentId": 10,
+  "skills": [
+    "Python",
+    "MongoDB"
+  ],
+  "experience": 6,
+  "active": false,
+  "certifications": [
+    {
+      "name": "MongoDB",
+      "status": "Active",
+      "expiryYear": 2028
+    }
+  ]
+}
+```
+
+##### Verification 3: Total Employee Document Count (3 → 4)
+⚡ **Input Command:**
+```javascript
+db.employees.countDocuments();
+```
+🖥️ **Terminal Output:**
+```text
+4
+```
+
+#### Visual Execution Proof:
+* **Bulk Write Batch Execution & Acknowledgment:**  
+  ![Task 3 Bulk Write Execution](screenshots/03a_bulk_write_execution.png)
+* **Final State Verification (John Experience, Alice Active, Total Count):**  
+  ![Task 3 Bulk Write Verification](screenshots/03b_bulk_write_verification.png)
+

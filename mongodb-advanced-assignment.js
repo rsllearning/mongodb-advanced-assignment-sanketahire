@@ -83,3 +83,39 @@ db.employees.updateOne(
 );
 
 db.employees.find({}, { name: 1, certifications: 1 });
+
+db.employees.bulkWrite([
+  {
+    updateOne: {
+      filter: { name: "John" },
+      update: { $inc: { experience: NumberInt(1) } }
+    }
+  },
+  {
+    updateOne: {
+      filter: { name: "Alice" },
+      update: { $set: { active: false } }
+    }
+  },
+  {
+    insertOne: {
+      document: {
+        _id: 4,
+        name: "Emma",
+        departmentId: NumberInt(20),
+        skills: ["Excel"],
+        experience: NumberInt(2),
+        active: true,
+        certifications: [
+          { name: "Excel", status: "Active", expiryYear: NumberInt(2026) }
+        ]
+      }
+    }
+  }
+]);
+
+db.employees.findOne({ name: "John" });
+
+db.employees.findOne({ name: "Alice" });
+
+db.employees.countDocuments();
