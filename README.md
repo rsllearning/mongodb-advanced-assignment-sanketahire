@@ -909,3 +909,94 @@ db.sessions.getIndexes();
 * **TTL Collection, Document & Index Verification (5.3):**  
   ![Task 5 TTL Index Verification](screenshots/05c_ttl_index_verification.png)
 
+---
+
+### Task 6: Backup and Restore
+
+#### Step 1: Create a Logical Compressed Backup with `mongodump`
+Back up the `company_advanced` database to a gzip-compressed archive file named `company_advanced.archive`.
+
+⚡ **Input Command:**
+```bash
+mongodump --db company_advanced --archive=company_advanced.archive --gzip
+```
+🖥️ **Terminal Output:**
+```text
+writing `company_advanced.departments` to "archive `company_advanced.archive`"
+writing `company_advanced.employees` to "archive `company_advanced.archive`"
+writing `company_advanced.sessions` to "archive `company_advanced.archive`"
+done dumping `company_advanced.departments` (2 documents)
+done dumping `company_advanced.sessions` (1 document)
+done dumping `company_advanced.employees` (4 documents)
+```
+
+#### Step 2: Restore into New Database with Namespace Remapping
+Restore the compressed archive into a new, isolated database named `company_advanced_restore` using `--nsFrom` and `--nsTo`. This safeguards the original working database from being overwritten.
+
+⚡ **Input Command:**
+```bash
+mongorestore --archive=company_advanced.archive --gzip \
+  --nsFrom="company_advanced.*" \
+  --nsTo="company_advanced_restore.*"
+```
+🖥️ **Terminal Output:**
+```text
+preparing collections to restore from
+reading metadata for `company_advanced_restore.sessions` from "archive `company_advanced.archive`"
+reading metadata for `company_advanced_restore.departments` from "archive `company_advanced.archive`"
+reading metadata for `company_advanced_restore.employees` from "archive `company_advanced.archive`"
+restoring `company_advanced_restore.departments` from "archive `company_advanced.archive`"
+finished restoring `company_advanced_restore.departments` (2 documents, 0 failures)
+restoring `company_advanced_restore.sessions` from "archive `company_advanced.archive`"
+finished restoring `company_advanced_restore.sessions` (1 document, 0 failures)
+restoring `company_advanced_restore.employees` from "archive `company_advanced.archive`"
+finished restoring `company_advanced_restore.employees` (4 documents, 0 failures)
+restoring indexes for collection `company_advanced_restore.sessions` from metadata
+index: expiresAt_1
+restoring indexes for collection `company_advanced_restore.employees` from metadata
+index: departmentId_1_name_1
+7 document(s) restored successfully. 0 document(s) failed to restore.
+```
+
+#### Step 3: Verify Restored Collection Counts in `mongosh`
+Assert that all 3 collections and their respective document counts were restored intact in `company_advanced_restore`.
+
+⚡ **Input Command:**
+```javascript
+use company_advanced_restore;
+show collections;
+db.employees.countDocuments();
+db.departments.countDocuments();
+db.sessions.countDocuments();
+```
+🖥️ **Terminal Output:**
+```text
+switched to db company_advanced_restore
+departments
+employees
+sessions
+4
+2
+1
+```
+
+#### Step 4: Verify Original Working Database Integrity
+Assert that the original `company_advanced` database was completely untouched and preserved.
+
+⚡ **Input Command:**
+```javascript
+use company_advanced;
+db.employees.countDocuments();
+```
+🖥️ **Terminal Output:**
+```text
+switched to db company_advanced
+4
+```
+
+#### Visual Execution Proof:
+* **Backup and Remapped Restore Execution:**  
+  ![Task 6 Backup and Restore](screenshots/06a_dump_and_restore.png)
+* **Restored Database Collection Counts Verification:**  
+  ![Task 6 Restored Counts Verification](screenshots/06b_restored_collection_counts.png)
+

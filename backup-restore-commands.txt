@@ -1,0 +1,26 @@
+# ==============================================================================
+# MongoDB Advanced Training - Task 6: Backup and Restore
+# ==============================================================================
+
+# Step 1: Create a logical compressed backup of company_advanced database
+mongodump --db company_advanced --archive=company_advanced.archive --gzip
+
+# Step 2: Restore the archive into a new, isolated database (company_advanced_restore)
+# Uses namespace remapping (--nsFrom / --nsTo) to prevent overwriting live database
+mongorestore --archive=company_advanced.archive --gzip \
+  --nsFrom="company_advanced.*" \
+  --nsTo="company_advanced_restore.*"
+
+# Step 3: Verify the restored collection counts in mongosh
+use company_advanced_restore;
+
+show collections;
+
+db.employees.countDocuments();    # Expected: 4
+db.departments.countDocuments();  # Expected: 2
+db.sessions.countDocuments();     # Expected: 1
+
+# Step 4: Verify original working database remains intact and untouched
+use company_advanced;
+
+db.employees.countDocuments();    # Expected: 4
