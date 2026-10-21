@@ -80,4 +80,172 @@ Open the MongoDB Shell (`mongosh`) and execute the individual query blocks step-
 
 ---
 
-*(Task-by-task implementation, terminal outputs, and screenshot verifications will be added sequentially across feature branch phases).*
+## Task-by-Task Implementation & Verification
+
+### Task 1: Schema Validation and Data Creation
+
+#### Step 1: Select Database & Clean Slate Reset
+Switch to the fresh `company_advanced` database and ensure a clean slate.
+
+⚡ **Input Command:**
+```javascript
+use company_advanced;
+db.employees.drop();
+```
+🖥️ **Terminal Output:**
+```text
+switched to db company_advanced
+true
+```
+
+#### Step 2: Create the Validated Collection with `$jsonSchema`
+Create the `employees` collection with strict schema validation enforcing:
+- `name`: string
+- `departmentId`: int
+- `experience`: int
+- `active`: bool
+
+⚡ **Input Command:**
+```javascript
+db.createCollection("employees", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["name", "departmentId", "experience", "active"],
+      properties: {
+        name: {
+          bsonType: "string",
+          description: "must be a string and is required"
+        },
+        departmentId: {
+          bsonType: "int",
+          description: "must be an integer and is required"
+        },
+        experience: {
+          bsonType: "int",
+          description: "must be an integer and is required"
+        },
+        active: {
+          bsonType: "bool",
+          description: "must be a boolean and is required"
+        }
+      }
+    }
+  }
+});
+```
+🖥️ **Terminal Output:**
+```json
+{
+  "ok": 1
+}
+```
+
+#### Step 3: Insert the Starting Dataset
+Insert the three baseline employee documents (John, Alice, David) using `NumberInt()` for integer fields.
+
+⚡ **Input Command:**
+```javascript
+db.employees.insertMany([
+  {
+    _id: 1,
+    name: "John",
+    departmentId: NumberInt(10),
+    skills: ["Java", "MongoDB"],
+    experience: NumberInt(4),
+    active: true,
+    certifications: [
+      { name: "MongoDB", status: "Expired", expiryYear: NumberInt(2026) }
+    ]
+  },
+  {
+    _id: 2,
+    name: "Alice",
+    departmentId: NumberInt(10),
+    skills: ["Python", "MongoDB"],
+    experience: NumberInt(6),
+    active: true,
+    certifications: [
+      { name: "MongoDB", status: "Active", expiryYear: NumberInt(2028) }
+    ]
+  },
+  {
+    _id: 3,
+    name: "David",
+    departmentId: NumberInt(20),
+    skills: ["Communication"],
+    experience: NumberInt(3),
+    active: false,
+    certifications: [
+      { name: "Communication", status: "Active", expiryYear: NumberInt(2027) }
+    ]
+  }
+]);
+```
+🖥️ **Terminal Output:**
+```json
+{
+  "acknowledged": true,
+  "insertedIds": {
+    "0": 1,
+    "1": 2,
+    "2": 3
+  }
+}
+```
+
+#### Step 4: Test Schema Validation with Invalid Document
+Attempt to insert an invalid document (`_id: 99`) containing mismatched types (`name` as integer, `departmentId` as string `"HR"`, `experience` as string `"one"`, `active` as string `"yes"`).
+
+⚡ **Input Command:**
+```javascript
+db.employees.insertOne({
+  _id: 99,
+  name: 123,
+  departmentId: "HR",
+  experience: "one",
+  active: "yes"
+});
+```
+🖥️ **Terminal Output:**
+```text
+MongoServerError: Document failed validation
+Additional information: {
+  failingDocumentId: 99,
+  details: {
+    operatorName: '$jsonSchema',
+    schemaRulesNotSatisfied: [
+      {
+        operatorName: 'properties',
+        propertiesNotSatisfied: [
+          { propertyName: 'name', reason: 'type did not match', consideredValue: 123, consideredType: 'int' },
+          { propertyName: 'departmentId', reason: 'type did not match', consideredValue: 'HR', consideredType: 'string' },
+          { propertyName: 'experience', reason: 'type did not match', consideredValue: 'one', consideredType: 'string' },
+          { propertyName: 'active', reason: 'type did not match', consideredValue: 'yes', consideredType: 'string' }
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### Step 5: Verify Collection Document Count
+Confirm that the collection contains strictly the 3 valid documents.
+
+⚡ **Input Command:**
+```javascript
+db.employees.countDocuments();
+```
+🖥️ **Terminal Output:**
+```text
+3
+```
+
+#### Visual Execution Proof:
+* **Setup, Collection Creation & Seed Insertion:**  
+  ![Task 1 Setup & Seed](screenshots/01a_setup_and_seed.png)
+* **Schema Validation Failure (Negative Test):**  
+  ![Task 1 Validation Rejection](screenshots/01b_validation_failure.png)
+* **Validation Details & Document Count Verification:**  
+  ![Task 1 Count Verification](screenshots/01c_count_verification.png)
+
