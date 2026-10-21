@@ -62,3 +62,24 @@ db.employees.insertOne({
 });
 
 db.employees.countDocuments();
+
+db.employees.find({
+  certifications: {
+    $elemMatch: { name: "MongoDB", status: "Active" }
+  }
+});
+
+db.employees.updateOne(
+  { _id: 1, "certifications.name": "MongoDB" },
+  { $set: { "certifications.$.status": "Active" } }
+);
+
+db.employees.findOne({ _id: 1 }, { name: 1, certifications: 1 });
+
+db.employees.updateOne(
+  { _id: 1 },
+  { $set: { "certifications.$[c].status": "Renewal Due" } },
+  { arrayFilters: [{ "c.expiryYear": { $lt: 2027 } }] }
+);
+
+db.employees.find({}, { name: 1, certifications: 1 });

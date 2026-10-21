@@ -249,3 +249,177 @@ db.employees.countDocuments();
 * **Validation Details & Document Count Verification:**  
   ![Task 1 Count Verification](screenshots/01c_count_verification.png)
 
+---
+
+### Task 2: Advanced Array Queries and Updates
+
+#### 2.1 Find One Matching Array Object with `$elemMatch`
+Find employees whose `certifications` contain the same subdocument object with `name: "MongoDB"` and `status: "Active"`. Using `$elemMatch` ensures both conditions match the same array element.
+
+⚡ **Input Command:**
+```javascript
+db.employees.find({
+  certifications: {
+    $elemMatch: { name: "MongoDB", status: "Active" }
+  }
+});
+```
+🖥️ **Terminal Output:**
+```json
+[
+  {
+    "_id": 2,
+    "name": "Alice",
+    "departmentId": 10,
+    "skills": [
+      "Python",
+      "MongoDB"
+    ],
+    "experience": 6,
+    "active": true,
+    "certifications": [
+      {
+        "name": "MongoDB",
+        "status": "Active",
+        "expiryYear": 2028
+      }
+    ]
+  }
+]
+```
+
+#### 2.2 Update One Matching Array Element using Positional `$` Operator
+Update John's MongoDB certification status from `"Expired"` to `"Active"`. The positional `$` operator identifies and mutates the first array element matching the query predicate.
+
+⚡ **Input Command:**
+```javascript
+db.employees.updateOne(
+  { _id: 1, "certifications.name": "MongoDB" },
+  { $set: { "certifications.$.status": "Active" } }
+);
+```
+🖥️ **Terminal Output:**
+```json
+{
+  "acknowledged": true,
+  "insertedId": null,
+  "matchedCount": 1,
+  "modifiedCount": 1,
+  "upsertedCount": 0
+}
+```
+
+**Verification:**
+⚡ **Input Command:**
+```javascript
+db.employees.findOne({ _id: 1 }, { name: 1, certifications: 1 });
+```
+🖥️ **Terminal Output:**
+```json
+{
+  "_id": 1,
+  "name": "John",
+  "certifications": [
+    {
+      "name": "MongoDB",
+      "status": "Active",
+      "expiryYear": 2026
+    }
+  ]
+}
+```
+
+#### 2.3 Update Selected Array Elements using `arrayFilters`
+Update the certification status to `"Renewal Due"` for certification elements whose `expiryYear` is strictly less than 2027 (`$lt: 2027`).
+
+⚡ **Input Command:**
+```javascript
+db.employees.updateOne(
+  { _id: 1 },
+  { $set: { "certifications.$[c].status": "Renewal Due" } },
+  { arrayFilters: [{ "c.expiryYear": { $lt: 2027 } }] }
+);
+```
+🖥️ **Terminal Output:**
+```json
+{
+  "acknowledged": true,
+  "insertedId": null,
+  "matchedCount": 1,
+  "modifiedCount": 1,
+  "upsertedCount": 0
+}
+```
+
+**Verification:**
+⚡ **Input Command:**
+```javascript
+db.employees.findOne({ _id: 1 }, { name: 1, certifications: 1 });
+```
+🖥️ **Terminal Output:**
+```json
+{
+  "_id": 1,
+  "name": "John",
+  "certifications": [
+    {
+      "name": "MongoDB",
+      "status": "Renewal Due",
+      "expiryYear": 2026
+    }
+  ]
+}
+```
+
+#### Step 4: Verification of Final Required Certification Values
+Verify that Alice's certification remains `"Active"` and John's certification is updated to `"Renewal Due"`.
+
+⚡ **Input Command:**
+```javascript
+db.employees.find({}, { name: 1, certifications: 1 });
+```
+🖥️ **Terminal Output:**
+```json
+[
+  {
+    "_id": 1,
+    "name": "John",
+    "certifications": [
+      {
+        "name": "MongoDB",
+        "status": "Renewal Due",
+        "expiryYear": 2026
+      }
+    ]
+  },
+  {
+    "_id": 2,
+    "name": "Alice",
+    "certifications": [
+      {
+        "name": "MongoDB",
+        "status": "Active",
+        "expiryYear": 2028
+      }
+    ]
+  },
+  {
+    "_id": 3,
+    "name": "David",
+    "certifications": [
+      {
+        "name": "Communication",
+        "status": "Active",
+        "expiryYear": 2027
+      }
+    ]
+  }
+]
+```
+
+#### Visual Execution Proof:
+* **$elemMatch Query & Positional Update Cross-Verification:**  
+  ![Task 2 Array Match & Positional Update](screenshots/02a_array_match_and_positional_update.png)
+* **arrayFilters Update & Final Certification Verification:**  
+  ![Task 2 Array Filters & Final Verification](screenshots/02b_array_filters_and_verification.png)
+
